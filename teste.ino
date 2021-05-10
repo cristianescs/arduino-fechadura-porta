@@ -1,12 +1,14 @@
 #include <Keypad.h>
 #include <LiquidCrystal.h>
+#include <Servo.h>
 
 LiquidCrystal lcd(A0, A1, A2, A3, A4, A5); //Pinos do LCD
 
-String senha = "123456";
+String senha = "12345";
 String buf = "";
 int i = 0; 
-int lampada = 11;
+int pinServo = 10;
+Servo s;
 const byte ROWS = 4;
 const byte COLS = 4;
 char keys [ROWS] [COLS] = {
@@ -24,8 +26,8 @@ Keypad keypad = Keypad(makeKeymap (keys), rowPins, colPins, ROWS, COLS);
 void setup()
 {
     Serial.begin(9600);
-    pinMode(lampada, OUTPUT);
-  	digitalWrite(lampada, LOW);
+    s.attach(pinServo);
+  	s.write(0);
     lcd.begin(16,2);
     lcd.setCursor (0,0);
     lcd.print("INICIANDO...");
@@ -49,23 +51,35 @@ void loop(){
 }
 
 void password (){
-    while (i < 6){
+    while (i < 5){
         lcd.setCursor (0,0);
         lcd.print("Senha: ");
       
         char key = keypad.getKey();
+
+         if (key != '#'){
         if(key != NO_KEY){
             buf += key;
             lcd.print(buf);
             i++;
-        }
+        }} else {
+        	i = 0;
+            lcd.clear();
+            buf = "";
+            password(); 
+      }
+      	lcd.setCursor (0,1);
+        lcd.print("# para limpar");
     }
 
     if (buf == senha){
+        lcd.setCursor(0,0);
+        lcd.print("Senha Correta!");
         lcd.setCursor(0,1);
         lcd.print("Porta aberta");
-      	digitalWrite(lampada, HIGH);
+        s.write(75);
       	delay(5000);
+        s.write(0);
         lcd.clear();
         lcd.setCursor(0,0);
         lcd.print("Pressione * ");
@@ -75,6 +89,5 @@ void password (){
       lcd.print("Pressione * ");
       lcd.setCursor(0,1);
       lcd.print("SENHA INCORRETA");
-      digitalWrite(lampada, LOW);
 	}
 }
