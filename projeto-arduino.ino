@@ -7,6 +7,7 @@ LiquidCrystal lcd(A0, A1, A2, A3, A4, A5); //Pinos do LCD
 String senha = "12345";
 String buf = "";
 int i = 0; 
+int presenca;
 int pinServo = 10;
 Servo s;
 const byte ROWS = 4;
@@ -26,6 +27,7 @@ Keypad keypad = Keypad(makeKeymap (keys), rowPins, colPins, ROWS, COLS);
 void setup()
 {
     Serial.begin(9600);
+    pinMode(12, INPUT); //sensor PIR
     s.attach(pinServo);
   	s.write(0);
     lcd.begin(16,2);
@@ -37,17 +39,27 @@ void setup()
 }
 
 void loop(){
-  
-    char key = keypad.getKey();
+   pir();
+}
 
+void pir(){
+ 	presenca = digitalRead(12); 
+ 	Serial.println(presenca);
+  
+  if(presenca  == 1){
+    lcd.display();
+    char key = keypad.getKey();
     if(key != NO_KEY){
         if (key == '*'){
             i = 0;
             lcd.clear();
             buf = "";
-            password(); 
+            password();
         }
     }
+  } else {
+    lcd.noDisplay();
+  }
 }
 
 void password (){
