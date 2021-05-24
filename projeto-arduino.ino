@@ -4,10 +4,11 @@
 
 LiquidCrystal lcd(A0, A1, A2, A3, A4, A5); //Pinos do LCD
 
-String senha = "12345";
-String buf = "";
+String senhaPadrao = "12345"; //mudar a senha aqui
+String senha = "";
 int i = 0; 
-int presenca;
+int movimento; //sensor pir
+int buzzer = 11;
 int pinServo = 10;
 Servo s;
 const byte ROWS = 4;
@@ -15,7 +16,7 @@ const byte COLS = 4;
 char keys [ROWS] [COLS] = {
     {'1', '2', '3', 'A'},
     {'4', '5', '6', 'B'},
-    {'6', '7', '9', 'C'},
+    {'7', '8', '9', 'C'},
     {'*', '0', '#', 'D'}
 };
 
@@ -27,7 +28,9 @@ Keypad keypad = Keypad(makeKeymap (keys), rowPins, colPins, ROWS, COLS);
 void setup()
 {
     Serial.begin(9600);
+    pinMode(buzzer, OUTPUT);
     pinMode(12, INPUT); //sensor PIR
+    pinMode(13, OUTPUT); //display backlight
     s.attach(pinServo);
   	s.write(0);
     lcd.begin(16,2);
@@ -39,67 +42,81 @@ void setup()
 }
 
 void loop(){
-   pir();
+   sensorPir();
 }
 
-void pir(){
- 	presenca = digitalRead(12); 
- 	Serial.println(presenca);
+void sensorPir(){
+ 	movimento = digitalRead(12); 
   
-  if(presenca  == 1){
+  if(movimento  == 1){
+    digitalWrite(13, HIGH);
     lcd.display();
     char key = keypad.getKey();
-    if(key != NO_KEY){
+    
         if (key == '*'){
             i = 0;
             lcd.clear();
-            buf = "";
-            password();
+            senha = "";
+            digitarSenha();
         }
-    }
+    
   } else {
+    digitalWrite(13, LOW);
     lcd.noDisplay();
   }
 }
 
-void password (){
+void digitarSenha (){
     while (i < 5){
-        lcd.setCursor (0,0);
-        lcd.print("Senha: ");
-      
-        char key = keypad.getKey();
+      char key = keypad.getKey();
+      lcd.setCursor (0,0);
+  	  lcd.print("Senha: ");
+      lcd.setCursor (0,1);
+    	lcd.print("# para limpar ");
 
-         if (key != '#'){
-        if(key != NO_KEY){
-            buf += key;
-            lcd.print(buf);
-            i++;
-        }} else {
-        	i = 0;
-            lcd.clear();
-            buf = "";
-            password(); 
+      if(key){
+        Serial.println(key);
+          if(key == '#'){
+            lcd.clear(); 
+            i=0; 
+            senha=""; 
+          } else{
+            senha += key; 
+            lcd.setCursor(senha.length() + 6, 0); 
+            lcd.print('*');
+            i++; 
+          }
       }
-      	lcd.setCursor (0,1);
-        lcd.print("# para limpar");
-    }
+    } 
 
-    if (buf == senha){
+ 	checarSenha();
+}
+
+void checarSenha(){
+  if (senha == senhaPadrao){
+    	lcd.clear();
+    	Serial.println("Senha correta!");
         lcd.setCursor(0,0);
         lcd.print("Senha Correta!");
         lcd.setCursor(0,1);
         lcd.print("Porta aberta");
         s.write(75);
-      	delay(5000);
+      	delay(2000);
         s.write(0);
         lcd.clear();
         lcd.setCursor(0,0);
         lcd.print("Pressione * ");
       
     } else {
+      lcd.clear();
+      Serial.println("Senha incorreta, tente de novo!");   
       lcd.setCursor(0,0);
-      lcd.print("Pressione * ");
-      lcd.setCursor(0,1);
-      lcd.print("SENHA INCORRETA");
-	}
+      lcd.print("Senha incorreta!");
+      tone(buzzer,293);
+      delay(1000);
+      noTone(buzzer);
+  	  lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("Pressione *");
+    }
 }
