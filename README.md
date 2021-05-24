@@ -15,15 +15,7 @@ Simular a fechadura de uma porta controlada por senha usando teclado matricial, 
 
 #### Diagrama
 
-Img do diagrama
-
-#### Funcionamento
-
-
-
-
-
-
+![Diagrama do projeto feito no Tinkercad](diagrama.png)
 
 ## Referências
 
